@@ -1,0 +1,15 @@
+name: Automatic Approve
+description: Automatically approve workflow runs from first time contributors
+runs:
+  using: node12
+  main: index.js
+branding:
+  icon: user-check
+  color: green
+inputs:
+  token:
+    description: The GitHub Token to use
+    required: true
+  workflows:
+    description: The workflows to automatically approve
+    required: true
