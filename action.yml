@@ -13,3 +13,7 @@ inputs:
   workflows:
     description: The workflows to automatically approve
     required: true
+  dangerous_files:
+    description: Filenames that prevent the PR being automatically approved
+    required: false
+
