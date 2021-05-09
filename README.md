@@ -16,7 +16,8 @@ When executing, this action:
 ```yaml
 name: Automatic Approve
 on:
-  schedule: "*/5 * * * *"
+  schedule: 
+    - cron:  "*/5 * * * *"
 jobs:
   automatic-approve:
     name: Automatic Approve
