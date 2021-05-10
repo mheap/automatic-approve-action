@@ -1,6 +1,5 @@
 const core = require("@actions/core");
 const github = require("@actions/github");
-const { run } = require("jest-cli");
 
 async function action() {
   const owner = github.context.repo.owner;
