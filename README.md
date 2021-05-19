@@ -16,8 +16,8 @@ When executing, this action:
 ```yaml
 name: Automatic Approve
 on:
-  schedule: 
-    - cron:  "*/5 * * * *"
+  schedule:
+    - cron: "*/5 * * * *"
 jobs:
   automatic-approve:
     name: Automatic Approve
@@ -30,6 +30,8 @@ jobs:
           workflows: "pr.yml,lint.yml"
           dangerous_files: "build.js"
 ```
+
+> **Important**: If you have multiple workflows with the same `name` and one of them is in the `workflows` list, **all** of the workflows with that name will be approved
 
 ## Available Configuration
 

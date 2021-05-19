@@ -1,5 +1,6 @@
 const core = require("@actions/core");
 const github = require("@actions/github");
+const yaml = require("js-yaml");
 
 async function action() {
   const owner = github.context.repo.owner;
@@ -32,10 +33,31 @@ async function action() {
     return;
   }
 
+  // Load the provided workflows so that we can map the workflow
+  // name (available in the runs API) to the workflow file
+  const nameToWorkflow = {};
+  for (let w of allowedWorkflows) {
+    const { data: file } = await octokit.repos.getContent({
+      owner,
+      repo,
+      path: w,
+    });
+    const workflow = yaml.load(Buffer.from(file.content, "base64"));
+    if (workflow.name) {
+      nameToWorkflow[workflow.name] = w;
+    }
+  }
+
   // Filter only to workflows that are in the allow list
-  runs = runs.workflow_runs.filter((run) =>
-    allowedWorkflows.includes(run.name)
-  );
+  runs = runs.workflow_runs.filter((run) => {
+    let name;
+    if (nameToWorkflow[run.name]) {
+      name = nameToWorkflow[run.name];
+    } else {
+      name = run.name;
+    }
+    return allowedWorkflows.includes(name);
+  });
 
   if (runs.length == 0) {
     console.log(
@@ -43,6 +65,7 @@ async function action() {
         ", "
       )}`
     );
+    return;
   }
 
   // Remove any PRs that edit the `.github/workflows` directory
@@ -53,6 +76,13 @@ async function action() {
       repo,
       head: `${run.head_repository.owner.login}:${run.head_branch}`,
     });
+
+    if (pulls.length === 0) {
+      console.log(
+        `No run found for '${run.head_repository.owner.login}:${run.head_branch}'`
+      );
+      return acc;
+    }
 
     // List all the files in there
     const { data: files } = await octokit.rest.pulls.listFiles({
