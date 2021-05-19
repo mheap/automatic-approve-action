@@ -70,16 +70,25 @@ async function action() {
 
   // Remove any PRs that edit the `.github/workflows` directory
   runs = await runs.reduce(async (acc, run) => {
+    // If the fork has been deleted head_repository will be null
+    if (!run.head_repository) {
+      console.log(
+        `No head_repository found for '${run.html_url}'. Must be manually approved`
+      );
+      return acc;
+    }
+
     // Find the pull request for the current run
     const { data: pulls } = await octokit.rest.pulls.list({
       owner,
       repo,
+      state: "all",
       head: `${run.head_repository.owner.login}:${run.head_branch}`,
     });
 
     if (pulls.length === 0) {
       console.log(
-        `No run found for '${run.head_repository.owner.login}:${run.head_branch}'`
+        `No pull request found for '${run.head_repository.owner.login}:${run.head_branch}'`
       );
       return acc;
     }

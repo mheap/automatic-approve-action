@@ -270,7 +270,7 @@ function mockInputDangerousFiles(files) {
 
 function mockGetPr(actor, number) {
   nock("https://api.github.com")
-    .get(`/repos/demo/repo/pulls?head=${actor}`)
+    .get(`/repos/demo/repo/pulls?state=all&head=${actor}`)
     .reply(200, [
       {
         number,
