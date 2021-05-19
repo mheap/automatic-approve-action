@@ -20,6 +20,19 @@ async function action() {
     .filter((r) => r);
   dangerousFiles.push(".github/workflows");
 
+  // Fetch runs that require action
+  let { data: runs } = await octokit.actions.listWorkflowRunsForRepo({
+    owner,
+    repo,
+    status: "action_required",
+  });
+
+  // If there are no runs, return early
+  if (runs.total_count == 0) {
+    console.log("No runs found with status 'action_required'");
+    return;
+  }
+
   // Load the provided workflows so that we can map the workflow
   // name (available in the runs API) to the workflow file
   const nameToWorkflow = {};
@@ -33,19 +46,6 @@ async function action() {
     if (workflow.name) {
       nameToWorkflow[workflow.name] = w;
     }
-  }
-
-  // Fetch runs that require action
-  let { data: runs } = await octokit.actions.listWorkflowRunsForRepo({
-    owner,
-    repo,
-    status: "action_required",
-  });
-
-  // If there are no runs, return early
-  if (runs.total_count == 0) {
-    console.log("No runs found with status 'action_required'");
-    return;
   }
 
   // Filter only to workflows that are in the allow list

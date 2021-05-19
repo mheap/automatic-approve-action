@@ -48,6 +48,9 @@ it("returns early if there are no runs with action required", async () => {
 it("returns early if there are no runs that match the provided workflow", async () => {
   mockInputToken();
   mockInputWorkflows();
+  mockWorkflowContents("pr.yml", {});
+  mockWorkflowContents("another.yml", {});
+
   jest.spyOn(console, "log").mockImplementation(() => {});
 
   nock("https://api.github.com")
@@ -71,6 +74,8 @@ it("returns early if there are no runs that match the provided workflow", async 
 it("removes any runs that edit .github/workflows", async () => {
   mockInputToken();
   mockInputWorkflows();
+  mockWorkflowContents("pr.yml", {});
+  mockWorkflowContents("another.yml", {});
   jest.spyOn(console, "log").mockImplementation(() => {});
 
   nock("https://api.github.com")
@@ -118,6 +123,8 @@ it("removes any runs that edit a file in dangerous_files", async () => {
   mockInputToken();
   mockInputWorkflows();
   mockInputDangerousFiles("build.js");
+  mockWorkflowContents("pr.yml", {});
+  mockWorkflowContents("another.yml", {});
   jest.spyOn(console, "log").mockImplementation(() => {});
 
   nock("https://api.github.com")
