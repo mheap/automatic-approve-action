@@ -1,5 +1,6 @@
 const core = require("@actions/core");
 const action = require("./index");
+const yaml = require("js-yaml");
 
 const nock = require("nock");
 nock.disableNetConnect();
@@ -145,10 +146,13 @@ it("removes any runs that edit a file in dangerous_files", async () => {
   expect(console.log).toBeCalledWith("Skipped dangerous run '12345678'");
 });
 
-it("approves all pending workflows", async () => {
+it("approves all pending workflows (no name)", async () => {
   mockInputToken();
   mockInputWorkflows();
   jest.spyOn(console, "log").mockImplementation(() => {});
+
+  mockWorkflowContents("pr.yml", {});
+  mockWorkflowContents("another.yml", {});
 
   nock("https://api.github.com")
     .get("/repos/demo/repo/actions/runs?status=action_required")
@@ -167,6 +171,56 @@ it("approves all pending workflows", async () => {
         },
         {
           name: ".github/workflows/pr.yml",
+          id: "87654321",
+          head_branch: "update-readme",
+          head_repository: {
+            owner: {
+              login: "user-b",
+            },
+          },
+        },
+      ],
+    });
+
+  mockGetPr("user-a%3Apatch-1", 99);
+  mockGetPr("user-b%3Aupdate-readme", 42);
+
+  mockPrFiles(99, ["README.md"]);
+  mockPrFiles(42, ["README.md"]);
+
+  mockApprove(12345678);
+  mockApprove(87654321);
+
+  await action();
+  expect(console.log).toBeCalledWith("Approved run '12345678'");
+  expect(console.log).toBeCalledWith("Approved run '87654321'");
+});
+
+it("approves all pending workflows (with name)", async () => {
+  mockInputToken();
+  mockInputWorkflows();
+  jest.spyOn(console, "log").mockImplementation(() => {});
+
+  mockWorkflowContents("pr.yml", { name: "Run Tests" });
+  mockWorkflowContents("another.yml", { name: "Do Another Thing" });
+
+  nock("https://api.github.com")
+    .get("/repos/demo/repo/actions/runs?status=action_required")
+    .reply(200, {
+      total_count: 2,
+      workflow_runs: [
+        {
+          name: "Run Tests",
+          id: "12345678",
+          head_branch: "patch-1",
+          head_repository: {
+            owner: {
+              login: "user-a",
+            },
+          },
+        },
+        {
+          name: "Do Another Thing",
           id: "87654321",
           head_branch: "update-readme",
           head_repository: {
@@ -232,4 +286,17 @@ function mockApprove(run) {
   nock("https://api.github.com")
     .post(`/repos/demo/repo/actions/runs/${run}/approve`)
     .reply(200);
+}
+
+function mockWorkflowContents(name, content) {
+  content = {
+    on: "push",
+    jobs: [],
+    ...content,
+  };
+  nock("https://api.github.com")
+    .get(`/repos/demo/repo/contents/.github%2Fworkflows%2F${name}`)
+    .reply(200, {
+      content: Buffer.from(yaml.dump(content)).toString("base64"),
+    });
 }
