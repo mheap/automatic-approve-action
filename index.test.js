@@ -20,12 +20,20 @@ afterEach(() => {
 });
 
 it("throws if no token is provided", async () => {
-  expect(action).rejects.toThrow("Input required and not supplied: token");
+  jest.spyOn(core, "setFailed").mockImplementation(() => {});
+  await action();
+  expect(core.setFailed).toBeCalledWith(
+    "Input required and not supplied: token"
+  );
 });
 
 it("throws if no workflow list is provided", async () => {
   mockInputToken();
-  expect(action).rejects.toThrow("Input required and not supplied: workflows");
+  jest.spyOn(core, "setFailed").mockImplementation(() => {});
+  await action();
+  expect(core.setFailed).toBeCalledWith(
+    "Input required and not supplied: workflows"
+  );
 });
 
 it("returns early if there are no runs with action required", async () => {
@@ -68,6 +76,21 @@ it("returns early if there are no runs that match the provided workflow", async 
   await action();
   expect(console.log).toBeCalledWith(
     "No runs found for the following workflows: .github/workflows/pr.yml, .github/workflows/another.yml"
+  );
+});
+
+it("handles HTTP 500 errors and exits with a failure code", async () => {
+  mockInputToken();
+  mockInputWorkflows();
+
+  jest.spyOn(core, "setFailed").mockImplementation(() => {});
+
+  nock("https://api.github.com")
+    .get("/repos/demo/repo/actions/runs?status=action_required")
+    .reply(500);
+  await action();
+  expect(core.setFailed).toBeCalledWith(
+    "Error fetching https://api.github.com/repos/demo/repo/actions/runs?status=action_required - HTTP 500"
   );
 });
 
