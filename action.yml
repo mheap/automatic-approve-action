@@ -1,8 +1,8 @@
 name: Automatic Approve
 description: Automatically approve workflow runs from first time contributors
 runs:
-  using: node12
-  main: index.js
+  using: node16
+  main: dist/index.js
 branding:
   icon: user-check
   color: green
@@ -16,4 +16,3 @@ inputs:
   dangerous_files:
     description: Filenames that prevent the PR being automatically approved
     required: false
-
