@@ -1,7 +1,7 @@
 name: Automatic Approve
 description: Automatically approve workflow runs from first time contributors
 runs:
-  using: node12
+  using: node20
   main: index.js
 branding:
   icon: user-check
