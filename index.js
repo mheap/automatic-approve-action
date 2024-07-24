@@ -23,6 +23,11 @@ async function action() {
       .filter((r) => r);
     dangerousFiles.push(".github/workflows");
 
+    const safeFiles = core
+    .getInput("safe_files")
+    .split(",")
+    .filter((r) => r);
+
     // Fetch runs that require action
     let { data: runs } = await octokit.actions.listWorkflowRunsForRepo({
       owner,
@@ -102,8 +107,8 @@ async function action() {
         repo,
         pull_number: pulls[0].number,
       });
-
-      const matching = files.filter((f) => {
+  
+      const matching_danger = files.filter((f) => {
         for (let d of dangerousFiles) {
           if (f.filename.includes(d)) {
             return true;
@@ -111,6 +116,20 @@ async function action() {
         }
       });
 
+      const matching_unsafe = files.filter((f) => {
+        if (!safeFiles.length) {
+          return false;
+        }
+        for (let s of safeFiles) {
+          if (f.filename.includes(s)) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      const matching = [].concat(matching_danger, matching_unsafe)
+  
       // If we changed any files in that directory, return the current set and skip this run
       if (matching.length > 0) {
         console.log(`Skipped dangerous run '${run.id}'`);

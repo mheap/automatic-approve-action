@@ -176,6 +176,112 @@ it("removes any runs that edit a file in dangerous_files", async () => {
   expect(console.log).toBeCalledWith("Skipped dangerous run '12345678'");
 });
 
+it("removes any runs that edit a file outside safe_files", async () => {
+  mockInputToken();
+  mockInputWorkflows();
+  mockInputSafeFiles("docs/");
+  mockWorkflowContents("pr.yml", {});
+  mockWorkflowContents("another.yml", {});
+  jest.spyOn(console, "log").mockImplementation(() => {});
+
+  nock("https://api.github.com")
+    .get("/repos/demo/repo/actions/runs?status=action_required")
+    .reply(200, {
+      total_count: 2,
+      workflow_runs: [
+        {
+          name: ".github/workflows/pr.yml",
+          id: "12345678",
+          head_branch: "patch-1",
+          head_repository: {
+            owner: {
+              login: "z-user",
+            },
+          },
+        },
+      ],
+    });
+
+  mockGetPr("z-user%3Apatch-1", 1713);
+
+  mockPrFiles(1713, ["build.js", "docs/index.md"]);
+
+  await action();
+  expect(console.log).toBeCalledWith("Skipped dangerous run '12345678'");
+});
+
+it("approves any runs that edit a file inside safe_files", async () => {
+  mockInputToken();
+  mockInputWorkflows();
+  mockInputSafeFiles("docs/");
+  mockWorkflowContents("pr.yml", {});
+  mockWorkflowContents("another.yml", {});
+  jest.spyOn(console, "log").mockImplementation(() => {});
+
+  nock("https://api.github.com")
+    .get("/repos/demo/repo/actions/runs?status=action_required")
+    .reply(200, {
+      total_count: 2,
+      workflow_runs: [
+        {
+          name: ".github/workflows/pr.yml",
+          id: "12345678",
+          head_branch: "patch-1",
+          head_repository: {
+            owner: {
+              login: "z-user",
+            },
+          },
+        },
+      ],
+    });
+
+  mockGetPr("z-user%3Apatch-1", 1713);
+
+  mockPrFiles(1713, ["docs/asdf.md", "docs/index.md"]);
+
+  mockApprove(12345678);
+
+  await action();
+  expect(console.log).toBeCalledWith("Approved run '12345678'");
+});
+
+it("approves any runs that edit a file inside multiple safe_files", async () => {
+  mockInputToken();
+  mockInputWorkflows();
+  mockInputSafeFiles("docs/,other/");
+  mockWorkflowContents("pr.yml", {});
+  mockWorkflowContents("another.yml", {});
+  jest.spyOn(console, "log").mockImplementation(() => {});
+
+  nock("https://api.github.com")
+    .get("/repos/demo/repo/actions/runs?status=action_required")
+    .reply(200, {
+      total_count: 2,
+      workflow_runs: [
+        {
+          name: ".github/workflows/pr.yml",
+          id: "12345678",
+          head_branch: "patch-1",
+          head_repository: {
+            owner: {
+              login: "z-user",
+            },
+          },
+        },
+      ],
+    });
+
+  mockGetPr("z-user%3Apatch-1", 1713);
+
+  mockPrFiles(1713, ["docs/asdf.md", "docs/index.md"]);
+
+  mockApprove(12345678);
+
+  await action();
+  expect(console.log).toBeCalledWith("Approved run '12345678'");
+});
+
 it("approves all pending workflows (no name)", async () => {
   mockInputToken();
   mockInputWorkflows();
@@ -288,7 +394,11 @@ function mockInputWorkflows(workflows) {
 }
 
 function mockInputDangerousFiles(files) {
-  jest.spyOn(core, "getInput").mockImplementationOnce(() => files);
+  jest.spyOn(core, "getInput").mockImplementationOnce(() => files).mockImplementationOnce(() => '');
+}
+
+function mockInputSafeFiles(files) {
+  jest.spyOn(core, "getInput").mockImplementationOnce(() => '').mockImplementationOnce(() => files);
 }
 
 function mockGetPr(actor, number) {
