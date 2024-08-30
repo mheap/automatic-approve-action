@@ -42,3 +42,4 @@ jobs:
 | `token`           | The GitHub Token to use. Must be a [personal access token](https://github.com/settings/tokens) with the `repo` scope | true     | N/A     |
 | `workflows`       | The workflows to automatically approve                                                                               | true     | N/A     |
 | `dangerous_files` | A comma-separated list of filenames that prevent the PR being automatically approved                                 | false    |         |
+| `safe_files` | A comma-separated list of filenames that allow the PR being automatically approved                                 | false    |         |

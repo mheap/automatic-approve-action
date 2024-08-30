@@ -16,4 +16,6 @@ inputs:
   dangerous_files:
     description: Filenames that prevent the PR being automatically approved
     required: false
-
+  safe_files:
+    description: Filenames that allow the PR being automatically approved
+    required: false
